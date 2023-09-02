@@ -1,5 +1,5 @@
-# Matteaz
+# mtt
 My personal C++ library
 
 # Libraries
-- String
+- str
