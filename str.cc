@@ -1,6 +1,6 @@
 #include "str.h"
 
-std::size_t mtt::fstr_ival_fmt_t::conv(const char *fstr, const char **end) const noexcept
+std::size_t mtt::fstr_to_ival_fmt_t::conv(const char *fstr, const char **end) const noexcept
 {
 	if (fstr == nullptr)
 	{
@@ -10,17 +10,17 @@ std::size_t mtt::fstr_ival_fmt_t::conv(const char *fstr, const char **end) const
 	}
 
 	char fc = *fstr;
-	std::size_t sign;
+	std::size_t s;
 
 	if (fill)
 	{
-		if (fill_mode == fill_mode_t::INTERNAL)
+		if (fs & INTERNAL_FILL)
 		{
 			if (minus && fc == minus)
 			{
 				fstr++;
 				fc = *fstr;
-				sign = -1;
+				s = -1;
 			}
 			else
 			{
@@ -30,7 +30,7 @@ std::size_t mtt::fstr_ival_fmt_t::conv(const char *fstr, const char **end) const
 					fc = *fstr;
 				}
 
-				sign = 1;
+				s = 1;
 			}
 
 			while (fc == fill)
@@ -41,20 +41,20 @@ std::size_t mtt::fstr_ival_fmt_t::conv(const char *fstr, const char **end) const
 		}
 		else
 		{
-			if (((int)fill_mode & (int)fill_mode_t::RIGHT) == false)
+			if ((fs & RIGHT_FILL) == 0)
 			{
 				while (fc == fill)
 				{
 					fstr++;
 					fc = *fstr;
-				}
+				}			
 			}
 
 			if (minus && fc == minus)
 			{
 				fstr++;
 				fc = *fstr;
-				sign = -1;
+				s = -1;
 			}
 			else
 			{
@@ -64,7 +64,7 @@ std::size_t mtt::fstr_ival_fmt_t::conv(const char *fstr, const char **end) const
 					fc = *fstr;
 				}
 
-				sign = 1;
+				s = 1;
 			}
 		}
 	}
@@ -74,7 +74,7 @@ std::size_t mtt::fstr_ival_fmt_t::conv(const char *fstr, const char **end) const
 		{
 			fstr++;
 			fc = *fstr;
-			sign = -1;
+			s = -1;
 		}
 		else
 		{
@@ -84,7 +84,7 @@ std::size_t mtt::fstr_ival_fmt_t::conv(const char *fstr, const char **end) const
 				fc = *fstr;
 			}
 
-			sign = 1;
+			s = 1;
 		}
 	}
 
@@ -94,14 +94,14 @@ std::size_t mtt::fstr_ival_fmt_t::conv(const char *fstr, const char **end) const
 	{
 		char diff;
 
-		if ((int)ltr_case & (int)ltr_case_t::UPPER)
+		if (fs & LOWERCASE)
 		{
-			char min = ltr_case == ltr_case_t::LOWER ? 87 : 55, diffmin = min - 10, max = diffmin + base;
+			char min = (fs & LOWERCASE) == LOWERCASE ? 'a' : 'A', diffmin = min - 10, max = diffmin + base;
 
 			while (true)
 			{
 				if (fc >= '0' && fc <= '9') diff = '0';
-				else if (fc >= min && fc < max) diff = diffmin;
+				else if (fc > min && fc < max) diff = diffmin;
 				else break;
 
 				fstr++;
@@ -116,13 +116,13 @@ std::size_t mtt::fstr_ival_fmt_t::conv(const char *fstr, const char **end) const
 			while (true)
 			{
 				if (fc >= '0' && fc <= '9') diff = '0';
-				else if (fc >= 'A' && fc < umax) diff = 55;
-				else if (fc >= 'a' && fc < lmax) diff = 87;
+				else if (fc > 'A' && fc < umax) diff = 55;
+				else if (fc > 'a' && fc < lmax) diff = 87;
 				else break;
 
 				fstr++;
 				ival = ival * base + fc - diff;
-				fc = *fstr;
+				fc = *fstr;				
 			}
 		}
 	}
@@ -140,10 +140,10 @@ std::size_t mtt::fstr_ival_fmt_t::conv(const char *fstr, const char **end) const
 
 	if (end) *end = fstr;
 
-	return sign * ival;
+	return s * ival;
 }
 
-std::size_t mtt::ival_fstr_fmt_t::conv(char *fstr, std::size_t ival) const noexcept
+std::size_t mtt::ival_to_fstr_fmt_t::conv(char *fstr, std::size_t ival) const noexcept
 {
 	std::size_t len;
 
@@ -162,7 +162,7 @@ std::size_t mtt::ival_fstr_fmt_t::conv(char *fstr, std::size_t ival) const noexc
 
 		if (base > 10)
 		{
-			char a = lcase ? 87 : 55;
+			char a = (fs & LOWERCASE) == LOWERCASE ? 87 : 55;
 
 			do
 			{
@@ -187,11 +187,11 @@ std::size_t mtt::ival_fstr_fmt_t::conv(char *fstr, std::size_t ival) const noexc
 		{
 			char *fw;
 
-			if (fill_mode == fill_mode_t::INTERNAL)
+			if (fs & INTERNAL_FILL)
 			{
 				fw = fstr + width - 1;
 
-				while (f < fw)
+				while  (f < fw)
 				{
 					*f = fill;
 					f++;
@@ -216,7 +216,7 @@ std::size_t mtt::ival_fstr_fmt_t::conv(char *fstr, std::size_t ival) const noexc
 				len = f - fstr;
 				mem_rev(fstr, len);
 			}
-			else if (fill_mode == fill_mode_t::RIGHT)
+			else if (fs & RIGHT_FILL)
 			{
 				if (neg)
 				{
@@ -232,7 +232,7 @@ std::size_t mtt::ival_fstr_fmt_t::conv(char *fstr, std::size_t ival) const noexc
 				mem_rev(fstr, f - fstr);
 				fw = fstr + width;
 
-				while (f < fw)
+				while  (f < fw)
 				{
 					*f = fill;
 					f++;
@@ -252,10 +252,10 @@ std::size_t mtt::ival_fstr_fmt_t::conv(char *fstr, std::size_t ival) const noexc
 					*f = plus;
 					f++;
 				}
-				
+
 				fw = fstr + width;
 
-				while (f < fw)
+				while  (f < fw)
 				{
 					*f = fill;
 					f++;
@@ -282,7 +282,7 @@ std::size_t mtt::ival_fstr_fmt_t::conv(char *fstr, std::size_t ival) const noexc
 			mem_rev(fstr, len);
 		}
 
-		if (null_term) *f = 0;
+		if ((fs & NO_NULL_TERM) == 0) *f = 0;
 	}
 	else
 	{
@@ -298,7 +298,7 @@ std::size_t mtt::ival_fstr_fmt_t::conv(char *fstr, std::size_t ival) const noexc
 			ival /= base;
 			len++;
 		} while (ival);
-
+		
 		if (len < width) len = width;
 	}
 

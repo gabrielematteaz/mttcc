@@ -5,50 +5,45 @@
 
 namespace mtt
 {
-	enum class fill_mode_t
-	{
-		LEFT,
-		INTERNAL,
-		RIGHT
-	};
-
-	class fstr_ival_fmt_t
+	class fstr_to_ival_fmt_t
 	{
 	public:
-		char plus, minus;
+		static constexpr int LEFT_FILL = 0x00;
+		static constexpr int INTERNAL_FILL = 0x01;
+		static constexpr int RIGHT_FILL = 0x02;
 
+		static constexpr int UNK_CASE = 0x00;
+		static constexpr int UPPERCASE = 0x04;
+		static constexpr int LOWERCASE = 0x0C;
+
+		char plus;
+		char minus;
 		char fill;
-		fill_mode_t fill_mode;
 	
-	private:
-		int base;
+	protected:
+		char base;
 	
 	public:
-		enum class ltr_case_t
-		{
-			MIXED,
-			UPPER = 1,
-			LOWER = 3
-		} ltr_case;
+		int fs;
 
-		inline fstr_ival_fmt_t() noexcept
-			: plus('+'), minus('-'), fill(' '), fill_mode(fill_mode_t::LEFT), base(10), ltr_case(ltr_case_t::MIXED)
+		fstr_to_ival_fmt_t() noexcept
+			: plus('+'), minus('-'), fill(' '), base(10), fs(LEFT_FILL)
 		{
 
 		}
 
-		inline fstr_ival_fmt_t(char plus, char minus, char fill, fill_mode_t fill_mode, int base, ltr_case_t ltr_case)
-			: plus(plus), minus(minus), fill(fill), fill_mode(fill_mode), base(base < 2 || base > 36 ? throw std::invalid_argument("base") : base), ltr_case(ltr_case)
+		fstr_to_ival_fmt_t(char plus, char minus, char fill, char base, int fs)
+			: plus(plus), minus(minus), fill(fill), base(base < 2 || base > 36 ? throw std::invalid_argument("base") : base), fs(fs)
 		{
 
 		}
 
-		inline int get_base() const noexcept
+		char get_base() const noexcept
 		{
 			return base;
 		}
 
-		inline bool set_base(int base) noexcept
+		bool set_base(char base) noexcept
 		{
 			if (base < 2 || base > 36) return false;
 
@@ -60,46 +55,23 @@ namespace mtt
 		std::size_t conv(const char *fstr, const char **end = nullptr) const noexcept;
 	};
 
-	class ival_fstr_fmt_t
+	class ival_to_fstr_fmt_t : public fstr_to_ival_fmt_t
 	{
 	public:
-		char plus, minus;
+		static constexpr int NO_NULL_TERM = 0x10;
 
-		char fill;
-		fill_mode_t fill_mode;
 		std::size_t width;
-	
-	private:
-		int base;
-	
-	public:
-		bool lcase;
-		bool null_term;
 
-		inline ival_fstr_fmt_t() noexcept
-			: plus(0), minus('-'), fill(' '), fill_mode(fill_mode_t::LEFT), width(0), base(10), lcase(false), null_term(true)
+		ival_to_fstr_fmt_t() noexcept
+			: fstr_to_ival_fmt_t(0, '-', ' ', 10, LEFT_FILL), width(0)
 		{
 
 		}
 
-		inline ival_fstr_fmt_t(char plus, char minus, char fill, fill_mode_t fill_mode, std::size_t width, int base, bool lcase, bool null_term)
-			: plus(plus), minus(minus), fill(fill), fill_mode(fill_mode), width(0), base(base < 2 || base > 36 ? throw std::invalid_argument("base") : base), lcase(lcase), null_term(null_term)
+		ival_to_fstr_fmt_t(char plus, char minus, char fill, char base, int fs, std::size_t width)
+			: fstr_to_ival_fmt_t(plus, minus, fill, base, fs), width(width)
 		{
 
-		}
-
-		inline int get_base() const noexcept
-		{
-			return base;
-		}
-
-		inline bool set_base(int base) noexcept
-		{
-			if (base < 2 || base > 36) return false;
-
-			this->base = base;
-
-			return true;
 		}
 
 		std::size_t conv(char *fstr, std::size_t ival) const noexcept;
